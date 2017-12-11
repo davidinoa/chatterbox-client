@@ -4,8 +4,14 @@
 var app = {
   server: 'http://parse.hrr.hackreactor.com/chatterbox/classes/messages',
   messages: [],
+  friends: [],
+  rooms: {},
+  currentRoom: 'lobby',
+  username: 'Tra-vid',
+
   init: function () {
-    setInterval(this.fetch(), 1000);
+    app.fetch();
+    setInterval(app.fetch, 1000);
   },
 
   clearMessages: function() {
@@ -13,13 +19,14 @@ var app = {
   },
 
   renderMessage: function(message) {
-    // var messages = this.messages;
-    // for (var i = 0; i < messages.length; i++) {
     var username = message.username;
     var text = message.text;
     var createdAt = message.createdAt;
-    var $messageContainer = $('<div></div>');
-    var $username = $(`<p>${username}</p>`);
+    var $messageContainer = $('<div class="messageContainer"></div>');
+    var $username = $(`<p class="username"><a href="#">${username}</a></p>`);
+    if (app.friends.indexOf($username.text()) !== -1) {
+      $messageContainer.addClass('friend');
+    }
     var $text = $(`<p>${text}</p>`);
     var $createdAt = $(`<p>${createdAt}</p>`);
 
@@ -27,13 +34,15 @@ var app = {
     $messageContainer.append($username);
     $messageContainer.append($text);
     $messageContainer.append($createdAt);
+
   },
 
   renderRoom: function(room) {
-    var newRoom = $(`<option>${room}</option>`);
-    // if ($('#roomSelect').children()_.contains(newRoom)) {
-    //   return;
-    // }
+    if (this.rooms[room]) {
+      return;
+    }
+    var newRoom = $('<option value="' + room + '">' + room + '</option>');
+    this.rooms[room] = true;
     $('#roomSelect').append(newRoom);
   },
 
@@ -41,16 +50,28 @@ var app = {
     $.ajax({
       url: app.server,
       type: 'GET',
-      // data: 'where={"createdAt":{"$text":{"$search":{"$term":"2017-12"}}}}',
       data: {
         order: '-createdAt'
       },
-      // contentType: 'application/json',
       success: function (data) {
+        console.log(data);
+
         var messages = data.results;
         messages.forEach(function (elem) {
+          app.renderRoom(elem.roomname);
+        });
+
+        var filteredMessages = messages.filter(function(elem) {
+          return elem.roomname === app.currentRoom;
+        });
+
+        app.clearMessages();
+
+        filteredMessages.forEach(function(elem) {
+          app.renderMessage(elem);
           app.messages.push(elem);
         });
+
         console.log('chatterbox: Message retrieved');
       },
       error: function (data) {
@@ -59,13 +80,14 @@ var app = {
     });
   },
 
-  createMessage: function(username, text, roomname) {
-    return message = {
-      username: username,
+  createMessage: function(text) {
+    var message = {
+      username: this.username,
       text: text,
-      roomname: roomname
+      roomname: this.currentRoom
     };
 
+    this.send(message);
   },
 
   send: function(message) {
@@ -73,9 +95,9 @@ var app = {
       url: app.server,
       type: 'POST',
       data: message,
-      // contentType: 'application/json',
       success: function (data) {
         console.log('chatterbox: Message sent');
+        app.fetch();
       },
       error: function (data) {
         console.error('chatterbox: Failed to send message', data);
@@ -83,9 +105,38 @@ var app = {
     });
   },
 
+  handleUsernameClick: function (event) {
+    // var friend = $('#chats')[0][0][1].text();
+    // app.friends.push(friend);
+    event.preventDefault();
+    var username = $(event.target).text();
+    app.friends.push(username);
+  },
+
+  handleSubmit: function(text) {
+    this.createMessage(text);
+    // this.renderNewMessage(text);
+  }
 
 };
 
-// implement function to render messages
-// jQuery script display messages in our HTML
-// logic to update messages
+$(document).ready(function() {
+  app.init();
+
+  $('#chats').on('click', '.username a', app.handleUsernameClick);
+
+  $('#roomSelect').on('change', function(event) {
+    var newCurrentRoom = $('#roomSelect option:selected').text();
+    app.currentRoom = newCurrentRoom;
+    app.clearMessages();
+    app.fetch();
+  });
+
+  $('#send').on('submit', function(event) {
+    event.preventDefault();
+    var text = $('#message').val();
+    app.handleSubmit(text);
+
+
+  });
+});

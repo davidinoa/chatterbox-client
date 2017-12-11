@@ -87,4 +87,26 @@ form input[type=text] {
     color: #fff;
     background-color: #0090da;
 }
+.username:hover {
+    color: red;
+}
 
+.messageContainer {
+    background-color: rgb(235, 235, 235);
+}
+
+.submit {
+  border: 1px solid grey;
+  padding: 2px 2px;
+  font: 2px
+}
+.submit:hover {
+  background: blue;
+  color: #f0f5f5;
+}
+
+
+.friend {
+    font-weight: bold;
+    color: black;
+}
