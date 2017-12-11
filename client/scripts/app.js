@@ -7,9 +7,10 @@ var app = {
   friends: [],
   rooms: {},
   currentRoom: 'lobby',
-  username: 'Tra-vid',
+  username: 'anonymous',
 
   init: function () {
+    $('#chats').on('click', '.username', app.handleUsernameClick);
     app.fetch();
     setInterval(app.fetch, 1000);
   },
@@ -23,7 +24,7 @@ var app = {
     var text = message.text;
     var createdAt = message.createdAt;
     var $messageContainer = $('<div class="messageContainer"></div>');
-    var $username = $(`<p class="username"><a href="#">${username}</a></p>`);
+    var $username = $(`<p class="username">${username}</p>`);
     if (app.friends.indexOf($username.text()) !== -1) {
       $messageContainer.addClass('friend');
     }
@@ -106,8 +107,6 @@ var app = {
   },
 
   handleUsernameClick: function (event) {
-    // var friend = $('#chats')[0][0][1].text();
-    // app.friends.push(friend);
     event.preventDefault();
     var username = $(event.target).text();
     app.friends.push(username);
@@ -115,15 +114,12 @@ var app = {
 
   handleSubmit: function(text) {
     this.createMessage(text);
-    // this.renderNewMessage(text);
   }
 
 };
 
 $(document).ready(function() {
   app.init();
-
-  $('#chats').on('click', '.username a', app.handleUsernameClick);
 
   $('#roomSelect').on('change', function(event) {
     var newCurrentRoom = $('#roomSelect option:selected').text();
